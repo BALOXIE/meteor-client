@@ -200,19 +200,22 @@ public class AutoFish extends Module {
         delay += Math.round((float) (norm * variance));
         return Math.max(1, delay);
     }
-    @meteordevelopment.orbit.EventHandler
+        @meteordevelopment.orbit.EventHandler
     private void onOpenScreen(meteordevelopment.meteorclient.events.game.OpenScreenEvent event) {
         if (!isActive() || !(event.screen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen<?> screen)) return;
 
         for (net.minecraft.screen.slot.Slot slot : screen.getScreenHandler().slots) {
-            if (slot.getStack().getItem() == net.minecraft.item.Items.EMERALD) {
+            if (slot.getStack().isOf(net.minecraft.item.Items.EMERALD)) {
                 int slotId = slot.id;
                 int syncId = screen.getScreenHandler().syncId;
 
-                mc.interactionManager.clickSlot(syncId, slotId, 0, net.minecraft.screen.slot.SlotActionType.PICKUP, mc.player);
-                mc.player.closeHandledScreen();
+                if (mc.interactionManager != null && mc.player != null) {
+                    mc.interactionManager.clickSlot(syncId, slotId, 0, net.minecraft.screen.slot.SlotActionType.PICKUP, mc.player);
+                    mc.player.closeHandledScreen();
+                }
                 break;
             }
         }
     }
 }
+
