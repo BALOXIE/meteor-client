@@ -199,22 +199,147 @@ public class AutoFish extends Module {
 
         delay += Math.round((float) (norm * variance));
         return Math.max(1, delay);
+    }package com.baloxie.autoverify.modules;
+
+import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.systems.modules.Category;
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.player.ChatUtils;
+import meteordevelopment.orbit.EventHandler;
+import net.minecraft.item.Items;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
+
+public class AutoVerify extends Module {
+    private int delayTimer = 0;
+
+    public AutoVerify(Category category) {
+        super(category, "auto-verify", "Auto solves fishing inventory verification.");
     }
-        @meteordevelopment.orbit.EventHandler
-    private void onOpenScreen(meteordevelopment.meteorclient.events.game.OpenScreenEvent event) {
-        if (!isActive() || !(event.screen instanceof net.minecraft.client.gui.screen.ingame.HandledScreen<?> screen)) return;
 
-        for (net.minecraft.screen.slot.Slot slot : screen.getScreenHandler().slots) {
-            if (slot.getStack().isOf(net.minecraft.item.Items.EMERALD)) {
-                int slotId = slot.id;
-                int syncId = screen.getScreenHandler().syncId;
+    @Override
+    public void onActivate() {
+        delayTimer = 0;
+    }
 
-                if (mc.interactionManager != null && mc.player != null) {
-                    mc.interactionManager.clickSlot(syncId, slotId, 0, net.minecraft.screen.slot.SlotActionType.PICKUP, mc.player);
-                    mc.player.closeHandledScreen();
+    @EventHandler
+    private void onTick(TickEvent.Post event) {
+        // Ensure player and world are fully loaded
+        if (mc.player == null || mc.world == null) return;
+
+        // Check if any inventory GUI is currently open
+        if (mc.player.currentScreenHandler != null) {
+            ScreenHandler handler = mc.player.currentScreenHandler;
+
+            // Calculate slots excluding the player's own 36 inventory slots
+            int containerSlots = handler.slots.size() - 36;
+
+            // If a custom container screen is opened by the server
+            if (containerSlots > 0) {
+                // Add a small delay (10 ticks / ~500ms) to allow the screen to load properly
+                if (delayTimer < 10) {
+                    delayTimer++;
+                    return;
                 }
-                break;
+
+                // Loop through all container slots to search for an Emerald
+                for (int slotId = 0; slotId < containerSlots; slotId++) {
+                    if (handler.getSlot(slotId).getStack().getItem() == Items.EMERALD) {
+                        
+                        // Click on the Emerald slot using the main thread
+                        mc.interactionManager.clickSlot(
+                            handler.syncId,
+                            slotId,
+                            0,
+                            SlotActionType.PICKUP,
+                            mc.player
+                        );
+
+                        ChatUtils.info("Auto Verify: Successfully clicked Emerald at slot " + slotId);
+
+                        // Close the inventory so Auto Fish can resume immediately
+                        mc.player.closeHandledScreen();
+                        delayTimer = 0;
+                        break;
+                    }
+                }
+            } else {
+                delayTimer = 0;
             }
+        } else {
+            delayTimer = 0;
+        }
+    }
+}
+package com.baloxie.autoverify.modules;
+
+import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.systems.modules.Category;
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.player.ChatUtils;
+import meteordevelopment.orbit.EventHandler;
+import net.minecraft.item.Items;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
+
+public class AutoVerify extends Module {
+    private int delayTimer = 0;
+
+    public AutoVerify(Category category) {
+        super(category, "auto-verify", "Auto solves fishing inventory verification.");
+    }
+
+    @Override
+    public void onActivate() {
+        delayTimer = 0;
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Post event) {
+        // Ensure player and world are fully loaded
+        if (mc.player == null || mc.world == null) return;
+
+        // Check if any inventory GUI is currently open
+        if (mc.player.currentScreenHandler != null) {
+            ScreenHandler handler = mc.player.currentScreenHandler;
+
+            // Calculate slots excluding the player's own 36 inventory slots
+            int containerSlots = handler.slots.size() - 36;
+
+            // If a custom container screen is opened by the server
+            if (containerSlots > 0) {
+                // Add a small delay (10 ticks / ~500ms) to allow the screen to load properly
+                if (delayTimer < 10) {
+                    delayTimer++;
+                    return;
+                }
+
+                // Loop through all container slots to search for an Emerald
+                for (int slotId = 0; slotId < containerSlots; slotId++) {
+                    if (handler.getSlot(slotId).getStack().getItem() == Items.EMERALD) {
+                        
+                        // Click on the Emerald slot using the main thread
+                        mc.interactionManager.clickSlot(
+                            handler.syncId,
+                            slotId,
+                            0,
+                            SlotActionType.PICKUP,
+                            mc.player
+                        );
+
+                        ChatUtils.info("Auto Verify: Successfully clicked Emerald at slot " + slotId);
+
+                        // Close the inventory so Auto Fish can resume immediately
+                        mc.player.closeHandledScreen();
+                        delayTimer = 0;
+                        break;
+                    }
+                }
+            } else {
+                delayTimer = 0;
+            }
+        } else {
+            delayTimer = 0;
         }
     }
 }
